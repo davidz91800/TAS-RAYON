@@ -1,0 +1,22 @@
+{
+  "name": "Calculateur TAS & Rayon de virage",
+  "short_name": "CalcTAS",
+  "description": "Calculateur de vol professionnel pour la vitesse vraie (TAS) et les rayons de virage.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#1a1c1e",
+  "theme_color": "#25282c",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
