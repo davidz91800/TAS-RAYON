@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculateur TAS & Rayon de virage</title>
+    
+    <!-- PWA additions -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#25282c">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
+    <!-- Polices & Icônes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Orbitron:wght@500&family=Stardos+Stencil:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css" integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <style>
+        :root{--primary-color:#00d9ff;--glow-color:rgba(0,217,255,0.5);--background-color:#1a1c1e;--surface-color:#25282c;--surface-hover-color:#3a3e42;--text-color:#e0e0e0;--text-muted-color:#888;}
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color); } 50% { text-shadow: 0 0 8px var(--glow-color), 0 0 15px var(--glow-color); } 100% { text-shadow: 0 0 5px var(--glow-color), 0 0 10px var(--glow-color); } }
+        @keyframes updated { 0% { background-color: var(--surface-hover-color); } 100% { background-color: transparent; } }
+
+        body{font-family:'Roboto',sans-serif;background-color:var(--background-color);color:var(--text-color);margin:0;padding:20px;display:flex;justify-content:center;align-items:center;min-height:100vh;}
+        .container{width:100%;max-width:600px;background-color:var(--surface-color);border-radius:15px;padding:30px;box-shadow:0 10px 40px rgba(0,0,0,0.5);border:1px solid #333;animation:fadeIn 0.5s ease-out forwards;box-sizing: border-box;}
+        
+        header.header-immersive {
+            background-color: #1f2225;
+            color: var(--text-color); 
+            text-align: center;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 12px;
+            border: 1px solid var(--surface-hover-color);
+        }
+        .header-main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem; 
+            margin-bottom: 1rem;
+        }
+        .header-logo {
+            width: 120px;
+            height: 120px;
+            flex-shrink: 0;
+        }
+        header.header-immersive h1 {
+            font-family: 'Stardos Stencil', cursive;
+            font-size: 2rem;
+            margin: 0;
+            line-height: 1.2;
+            letter-spacing: 0.1em;
+            color: var(--text-color);
+        }
+        header.header-immersive .header-credits {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            color: var(--text-muted-color); 
+        }
+        header.header-immersive .header-credits p { margin: 0.2rem 0; }
+        header.header-immersive .header-credits strong { font-weight: 500; color: var(--text-color); }
+        .header-credits .header-contact { margin-top: 0.75rem; font-size: 0.75rem; }
+        .header-contact .contact-icon { width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;transform:translateY(-1px); }
+        .header-contact a { color: var(--primary-color); font-weight: 500; text-decoration: none; }
+        .header-contact a:hover { text-decoration: underline; }
+
+        .input-section h4 {font-weight:400;color:var(--text-muted-color);border-bottom:1px solid var(--surface-hover-color);padding-bottom:10px;margin-top:25px;margin-bottom:20px;}
+        .input-section h4:first-child { margin-top: 0; }
+        .input-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+        .input-group label{font-size:1em;margin-bottom:10px;font-weight:300;display:block;}
+        input[type="number"]{width:100%;background-color:var(--background-color);border:1px solid var(--surface-hover-color);color:var(--primary-color);border-radius:5px;padding:12px;text-align:center;font-size:1.4em;font-family:'Orbitron',sans-serif;-moz-appearance:textfield;transition: all 0.2s ease; box-sizing: border-box;}
+        input[type="number"]:focus {background-color:#000;border-color:var(--primary-color);box-shadow: 0 0 10px var(--glow-color);}
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button {-webkit-appearance:none;margin:0;}
+        hr{border:0;height:1px;background-image:linear-gradient(to right,rgba(0,217,255,0),var(--primary-color),rgba(0,217,255,0));margin:40px 0;opacity:0.5;}
+        
+        .result-panel { background: linear-gradient(145deg, #2a2d30, #212326); border-radius: 10px; padding: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4); }
+        .tas-result{text-align:center;margin-bottom:25px;}
+        .tas-result h3{font-weight:400;margin:0 0 10px 0;color:var(--text-muted-color);text-transform:uppercase;letter-spacing:2px;font-size:0.9em;}
+        #tas-value{font-size:4.5em;font-weight:500;color:var(--text-color);font-family:'Orbitron',sans-serif;animation:pulse 4s infinite ease-in-out;transition:color 0.3s;}
+        #tas-value.updated{animation:none;color:var(--primary-color);}
+        #tas-value small{font-size:0.4em;font-weight:500;letter-spacing:normal;color:var(--text-muted-color);}
+        
+        .radius-results h3{font-weight:400;margin:20px 0 15px 0;color:var(--text-muted-color);text-align:left;}
+        .radius-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;text-align:center;}
+        .radius-item{background-color:var(--surface-color);padding:15px;border-radius:8px;border:1px solid var(--surface-hover-color);}
+        .radius-item .angle{font-size:1em;font-weight:700;display:block;margin-bottom:5px;color:var(--text-muted-color);}
+        .radius-item .value{font-size:1.6em;font-weight:400;color:var(--text-color);font-family:'Orbitron',sans-serif;transition: background-color 0.5s ease;}
+        .radius-item .value.updated{animation:updated 0.5s ease-out;}
+        .radius-item .value small{font-size:0.6em;font-family:'Roboto',sans-serif;}
+        
+        .details-accordion{margin-top:30px;}
+        .details-trigger{background-color:var(--surface-hover-color);color:var(--primary-color);cursor:pointer;padding:12px 18px;width:100%;border:none;text-align:left;outline:none;font-size:1.1em;font-family:'Roboto',sans-serif;border-radius:8px;transition:all 0.3s;}
+        .details-trigger:hover{background-color:#4a4e52;}
+        .details-trigger.active{border-bottom-left-radius:0;border-bottom-right-radius:0;}
+        .details-trigger .icon{float:right;transition:transform 0.3s ease;}
+        .details-trigger.active .icon{transform:rotate(180deg);}
+        .details-content{padding:10px 18px 20px 18px;background-color:#2e3134;max-height:0;overflow:hidden;transition:max-height 0.4s ease-out,padding 0.4s ease-out;border-bottom-left-radius:8px;border-bottom-right-radius:8px;}
+        
+        .detail-card{background-color:#242628;border:1px solid #444;border-radius:8px;padding:15px;margin-top:15px;}
+        .detail-header{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--surface-hover-color);padding-bottom:10px;margin-bottom:15px;font-size:1.2em;color:var(--primary-color);}
+        .detail-header .icon{font-size:1em;width:24px;text-align:center;}
+        .formula-line{padding:5px 0;font-size:1.1em;line-height:1.6;}
+        .formula-line code{font-family:'Fira Code',monospace;background-color:var(--surface-color);padding:8px 12px;border-radius:4px;display:block;text-align:center;}
+        .formula-line code em{font-style:normal;color:#a5d6ff;}
+        .result-highlight{color:var(--primary-color);font-weight:700;}
+        .constants{font-size:0.9em;color:var(--text-muted-color);text-align:center;margin-top:10px;}
+
+        /* --- STYLES RESPONSIVES POUR MOBILES --- */
+        @media (max-width: 640px) {
+            body {
+                padding: 10px 5px; /* Moins de marge sur les côtés */
+            }
+            .container {
+                padding: 20px 15px; /* Moins de marge à l'intérieur de la carte principale */
+            }
+            
+            /* En-tête : empilement vertical du logo et du titre */
+            .header-main {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .header-logo {
+                width: 80px;  /* Logo plus petit */
+                height: 80px;
+            }
+            header.header-immersive h1 {
+                font-size: 1.75rem; /* Titre plus petit */
+            }
+
+            /* Grille de saisie : passage à une seule colonne */
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Ajustement de la taille de la TAS */
+            #tas-value {
+                font-size: 4em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header-immersive">
+            <div class="header-main">
+                <img src="logocalc.png" alt="Logo Calculateur" class="header-logo">
+                <h1>Calculateur TAS<br>& Rayon de virage</h1>
+            </div>
+            <div class="header-credits">
+                <p>Créé par le <strong>CDT ZEMMOUR David</strong> / Version 1.0</p>
+                <p class="header-contact">
+                    <svg class="contact-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor"><path d="M3 4a2 2 0 0 0-2 2v1.161l8.441 4.221a1.25 1.25 0 0 0 1.118 0L19 7.162V6a2 2 0 0 0-2-2H3Z" /><path d="M19 8.839l-7.77 3.885a2.75 2.75 0 0 1-2.46 0L1 8.839V14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8.839Z" /></svg>
+                    <span>Des suggestions ? <a href="mailto:david.zemmour@intradef.gouv.fr?subject=Calculateur%20TAS%20-%20Suggestion">Écrivez-moi</a>.</span>
+                </p>
+            </div>
+        </header>
+
+        <div class="input-section">
+            <h4>Paramètres de Vol</h4>
+            <div class="input-grid">
+                <div class="input-group"><label>IAS (kt)</label><input type="number" id="ias-input" min="100" max="300" value="180"></div>
+                <div class="input-group"><label>Altitude Indiquée (ft)</label><input type="number" id="altitude-input" min="0" max="40000" value="20000"></div>
+            </div>
+            <h4>Conditions Atmosphériques</h4>
+            <div class="input-grid">
+                <div class="input-group"><label>QNH (hPa)</label><input type="number" id="qnh-input" min="950" max="1050" value="1013.25" step="0.25"></div>
+                <div class="input-group"><label>Écart ISA (ΔISA °C)</label><input type="number" id="delta-isa-input" min="-20" max="20" value="0"></div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="result-panel">
+            <div class="tas-result"><h3>Vitesse Vraie</h3><div id="tas-value"></div></div>
+            <div class="radius-results">
+                <div class="radius-grid">
+                    <div class="radius-item"><span class="angle">30°</span><span class="value" id="radius-30"></span></div>
+                    <div class="radius-item"><span class="angle">45°</span><span class="value" id="radius-45"></span></div>
+                    <div class="radius-item"><span class="angle">60°</span><span class="value" id="radius-60"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="details-accordion">
+            <button class="details-trigger">Voir le détail des calculs <span class="icon"><i class="fa-solid fa-chevron-down"></i></span></button>
+            <div class="details-content" id="details-container"></div>
+        </div>
+    </div>
+
+    <script>
+        const iasInput = document.getElementById('ias-input'), altitudeInput = document.getElementById('altitude-input');
+        const qnhInput = document.getElementById('qnh-input'), deltaIsaInput = document.getElementById('delta-isa-input');
+        
+        const tasValueDisplay = document.getElementById('tas-value');
+        const [radius30Display, radius45Display, radius60Display] = [document.getElementById('radius-30'), document.getElementById('radius-45'), document.getElementById('radius-60')];
+        
+        const detailsContainer = document.getElementById('details-container');
+        const accordionTrigger = document.querySelector('.details-trigger');
+        const accordionContent = document.querySelector('.details-content');
+
+        const g = 9.81, KNOTS_TO_MS = 0.5144, METERS_TO_NM = 1852;
+        const T0_K = 288.15, P0_HPA = 1013.25, FT_PER_HPA = 27;
+
+        function getIsaTempInCelsius(altitudeFt) { return 15 - (2 * (altitudeFt / 1000)); }
+        
+        function getPressureInHpa(pressureAltitudeFt) {
+            return P0_HPA * Math.pow((1 - 0.0000068756 * pressureAltitudeFt), 5.2559);
+        }
+
+        function calculateFlightParams() {
+            const ias = parseFloat(iasInput.value) || 0;
+            const indicatedAltitudeFt = parseFloat(altitudeInput.value) || 0;
+            const qnh = parseFloat(qnhInput.value) || P0_HPA;
+            const deltaIsa = parseFloat(deltaIsaInput.value) || 0;
+
+            const pressureAltitudeFt = indicatedAltitudeFt + (P0_HPA - qnh) * FT_PER_HPA;
+            const isaTempCelsius = getIsaTempInCelsius(indicatedAltitudeFt);
+            const oatCelsius = isaTempCelsius + deltaIsa;
+            const oatKelvin = oatCelsius + 273.15;
+            const pressureHpa = getPressureInHpa(pressureAltitudeFt);
+            
+            const pressureRatio = pressureHpa / P0_HPA;
+            const tempRatio = oatKelvin / T0_K;
+            const densityRatio = pressureRatio / tempRatio;
+
+            const tas = ias / Math.sqrt(densityRatio);
+            
+            const [radius30, radius45, radius60] = [calculateTurnRadius(tas, 30), calculateTurnRadius(tas, 45), calculateTurnRadius(tas, 60)];
+
+            updateMainDisplay(tas, radius30, radius45, radius60);
+            updateCalculationDetails(ias, tas, densityRatio, radius45, indicatedAltitudeFt, qnh, pressureAltitudeFt, isaTempCelsius, deltaIsa, oatCelsius, pressureHpa, oatKelvin);
+            
+            if (accordionTrigger.classList.contains('active')) accordionContent.style.maxHeight = accordionContent.scrollHeight + "px";
+        }
+        
+        function calculateTurnRadius(speedInKnots, bankAngleInDegrees) {
+            if (speedInKnots <= 0) return 0;
+            const speedInMs = speedInKnots * KNOTS_TO_MS;
+            const bankAngleInRadians = bankAngleInDegrees * (Math.PI / 180);
+            const tanPhi = Math.tan(bankAngleInRadians);
+            if (tanPhi <= 0) return Infinity;
+            return ((speedInMs ** 2) / (g * tanPhi)) / METERS_TO_NM;
+        }
+
+        function triggerUpdateAnimation(element) {
+            element.classList.add('updated');
+            setTimeout(() => element.classList.remove('updated'), 500);
+        }
+
+        function updateMainDisplay(tas, r30, r45, r60) {
+            tasValueDisplay.innerHTML = `${tas.toFixed(0)} <small>kt</small>`;
+            radius30Display.innerHTML = `${r30.toFixed(2)} <small>NM</small>`;
+            radius45Display.innerHTML = `${r45.toFixed(2)} <small>NM</small>`;
+            radius60Display.innerHTML = `${r60.toFixed(2)} <small>NM</small>`;
+            
+            triggerUpdateAnimation(tasValueDisplay);
+            [radius30Display, radius45Display, radius60Display].forEach(el => triggerUpdateAnimation(el));
+        }
+        
+        function updateCalculationDetails(ias, tas, densityRatio, radius45, altInd, qnh, altPres, isaTemp, deltaIsa, oat, pres, tempK) {
+            detailsContainer.innerHTML = `
+                <div class="detail-card">
+                    <div class="detail-header"><span class="icon"><i class="fa-solid fa-gauge-high"></i></span> 1. Pression Ambiante (P)</div>
+                    <div class="formula-line">Altitude Pression (PA) :<br><code><em>PA</em> = Alt Ind + ((<em>P<sub>0</sub></em> - <em>QNH</em>) * ${FT_PER_HPA})</code></div>
+                    <div class="formula-line"><code><em>PA</em> = ${altInd.toFixed(0)} + ((${P0_HPA} - ${qnh}) * ${FT_PER_HPA}) = <span class="result-highlight">${altPres.toFixed(0)} ft</span></code></div>
+                    <div class="formula-line">Pression Ambiante P à cette altitude pression :<br><code><em>P</em> = <span class="result-highlight">${pres.toFixed(1)} hPa</span></code></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-header"><span class="icon"><i class="fa-solid fa-temperature-half"></i></span> 2. Température Ambiante (T)</div>
+                    <div class="formula-line">Température ISA (OAT<sub>ISA</sub>) à l'altitude indiquée :<br><code><em>OAT<sub>ISA</sub></em> = 15 - (2 * (${altInd.toFixed(0)} / 1000)) = <span class="result-highlight">${isaTemp.toFixed(1)} °C</span></code></div>
+                    <div class="formula-line">Température Actuelle (OAT) :<br><code><em>OAT</em> = ${isaTemp.toFixed(1)} + (${deltaIsa.toFixed(1)}) = <span class="result-highlight">${oat.toFixed(1)} °C</span> ou <span class="result-highlight">${tempK.toFixed(1)} K</span></code></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-header"><span class="icon"><i class="fa-solid fa-atom"></i></span> 3. Rapport de Densité (σ)</div>
+                    <div class="formula-line">Formule : <code><em>σ</em> = (<em>P</em>/<em>P<sub>0</sub></em>) / (<em>T</em>/<em>T<sub>0</sub></em>)</code></div>
+                    <div class="constants">Avec P<sub>0</sub> = ${P0_HPA} hPa et T<sub>0</sub> = ${T0_K} K</div>
+                    <div class="formula-line">Application :<br><code><em>σ</em> = (${pres.toFixed(1)} / ${P0_HPA}) / (${tempK.toFixed(1)} / ${T0_K}) = <span class="result-highlight">${densityRatio.toFixed(3)}</span></code></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-header"><span class="icon"><i class="fa-solid fa-plane-up"></i></span> 4. Vitesse Vraie (TAS)</div>
+                    <div class="formula-line">Formule : <code><em>TAS</em> = <em>IAS</em> / √(<em>σ</em>)</code></div>
+                    <div class="formula-line">Application :<br><code><em>TAS</em> = ${ias} / √(${densityRatio.toFixed(3)}) = <span class="result-highlight">${tas.toFixed(1)} kt</span></code></div>
+                </div>
+                <div class="detail-card">
+                    <div class="detail-header"><span class="icon"><i class="fa-solid fa-arrows-turn-to-dots"></i></span> 5. Rayon de Virage (Ex: 45°)</div>
+                    <div class="formula-line">Application :<br><code><em>R<sub>45°</sub></em> = ( (${tas.toFixed(1)} * ${KNOTS_TO_MS})<sup>2</sup> / (${g} * tan(45°)) ) / ${METERS_TO_NM} = <span class="result-highlight">${radius45.toFixed(2)} NM</span></code></div>
+                </div>
+            `;
+        }
+        
+        const inputs = [iasInput, altitudeInput, qnhInput, deltaIsaInput];
+        inputs.forEach(input => input.addEventListener('input', calculateFlightParams));
+        
+        accordionTrigger.addEventListener('click', function() {
+            this.classList.toggle('active');
+            this.querySelector('.icon i').classList.toggle('fa-chevron-down');
+            this.querySelector('.icon i').classList.toggle('fa-chevron-up');
+            if (accordionContent.style.maxHeight) {
+                accordionContent.style.maxHeight = null;
+            } else {
+                accordionContent.style.maxHeight = accordionContent.scrollHeight + "px";
+            } 
+        });
+
+        window.addEventListener('load', calculateFlightParams);
+    </script>
+    
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('Service Worker enregistré avec succès:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Erreur lors de l\'enregistrement du Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
